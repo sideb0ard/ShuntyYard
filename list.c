@@ -31,7 +31,6 @@ void list_destroy(List *list)
 int list_ins_next(List *list, ListElmt *element, const void *data)
 {
     ListElmt *new_element;
-    printf("INS GOTX %c\n", (char)(char*)data);
 
     if ((new_element = (ListElmt*) malloc(sizeof(ListElmt))) == NULL)
         return -1;
