@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "linkedlistz.h"
+#include "list.h"
 
 
 void list_init(List *list, void (*destroy)(void *data))

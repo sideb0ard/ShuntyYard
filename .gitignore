@@ -1,1 +1,3 @@
 shunty
+*.dSYM
+*.o

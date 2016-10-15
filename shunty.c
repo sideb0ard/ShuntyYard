@@ -1,26 +1,31 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "linkedlistz.h"
+#include "stack.h"
 
 #define INT2VOIDP(i) (void*)(uintptr_t)(i)
 
 int t = 0;
 
+int parse_bytebeat(char *pattern);
 int parse_bytebeat(char *pattern)
 {
-    List *elementz = calloc(1, sizeof(List));
-    list_init(elementz, NULL);
+    Stack *elementz = calloc(1, sizeof(List));
+    stack_init(elementz, NULL);
 
     char *c = pattern;
+    // doing this once here as the increment in the while loop eats the first val before use.
+    // if i just put the increment in the body of the loop, vim complains about unused var
+    stack_push(elementz, INT2VOIDP(*c));
     while (*c++) {
-        list_ins_next(elementz, NULL, INT2VOIDP(*c));
         printf("Charrrr %c\n", *c);
+        stack_push(elementz, INT2VOIDP(*c));
     }
 
-    ListElmt *e;
-    for ( e = elementz->head; e != NULL; e = e->next) {
-        printf("ARF! %c\n", (char) list_data(e));
+    int ch;
+    printf("SIZE %d\n", stack_size(elementz));
+    while (stack_pop(elementz, (void **) &ch) == 0) {
+      printf("Woof! %c\n", (char)ch);
     }
 
 
@@ -36,7 +41,6 @@ int main(int argc, char **argv)
     }
 
     char pattern[128];
-    int result = parse_bytebeat(strncpy(pattern, argv[1], 127));
-    printf("\nRES: %d\n", result);
+    parse_bytebeat(strncpy(pattern, argv[1], 127));
 
 }
