@@ -5,7 +5,10 @@
 
 #include "stack.h"
 
-#define INT2VOIDP(i) (void*)(uintptr_t)(i)
+enum direction {
+    LEFT,
+    RIGHT
+};
 
 enum ops {
     LEFTSHIFT,
@@ -26,10 +29,23 @@ enum ops {
 // order must match the enum above
 char *ops[] = {"<<", ">>", "^", "|", "~", "&", "+", "-", "*", "/", "%", "(", ")"};
 
+enum token_type {
+    NUMBER,
+    OPERATOR,
+};
+
+typedef struct token {
+    int type;
+    int val;
+} token;
+
+
 bool isnum(char *ch);
 bool isvalid_char(char *ch);
 bool isvalid_pattern(char *pattern);
-
+int precedence(int op);
+int associativity(int op); // left or right
+int parse_bytebeat(char *pattern);
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -73,7 +89,44 @@ bool isvalid_pattern(char *pattern)
     return true;
 }
 
-int parse_bytebeat(char *pattern);
+// http://en.cppreference.com/w/c/language/operator_precedence
+int precedence(int op)
+{
+    switch(op) {
+    case 0:  // left and right shift
+    case 1:
+        return 4;
+    case 2: // XOR
+        return 2;
+    case 3: // bitwize OR
+        return 1;
+    case 4: // bitwize NOT ~
+        return 7;
+    case 5: // butwize AND
+        return 3;
+    case 6: // PLUS
+    case 7: // MINUS
+        return 5;
+    case 8: // MULTIPLY
+    case 9: // DIVIDE
+    case 10: // MODULO
+        return 6;
+    default:
+        return 99;
+    }
+}
+
+int associativity(int op)
+{
+    switch(op) {
+    case 4:
+        return RIGHT;
+    default:
+        return LEFT;
+    }
+}
+
+
 int parse_bytebeat(char *pattern)
 {
     Stack *numberz = calloc(1, sizeof(List));
@@ -97,72 +150,98 @@ int parse_bytebeat(char *pattern)
         if (*ch == 32 || *ch == 0)
             continue;
 
+        token *toke = calloc(1, sizeof(token));
+
         if ( isnum(ch)) {
             int pushy_num = atoi(ch);
+            toke->type = NUMBER;
+            toke->val = pushy_num;
+
+            stack_push(numberz, (void **)(toke));
+
             int num_len = (int) log10(pushy_num) +1;
-            stack_push(numberz, INT2VOIDP(pushy_num));
             i += num_len;
         }
         else {
+            toke->type = OPERATOR;
             switch (*ch) {
             case(60):
-                stack_push(operatorz, INT2VOIDP(LEFTSHIFT));
+                toke->val = LEFTSHIFT;
                 i++;
                 break;
             case(62):
-                stack_push(operatorz, INT2VOIDP(RIGHTSHIFT));
+                toke->val = RIGHTSHIFT;
                 i++;
                 break;
             case(94):
-                stack_push(operatorz, INT2VOIDP(XOR));
+                toke->val = XOR;
                 break;
             case(124):
-                stack_push(operatorz, INT2VOIDP(OR));
+                toke->val = OR;
                 break;
             case(126):
-                stack_push(operatorz, INT2VOIDP(NOT));
+                toke->val = NOT;
                 break;
             case(38):
-                stack_push(operatorz, INT2VOIDP(AND));
+                toke->val = AND;
                 break;
             case(43):
-                stack_push(operatorz, INT2VOIDP(PLUS));
+                toke->val = PLUS;
                 break;
             case(45):
-                stack_push(operatorz, INT2VOIDP(MINUS));
+                toke->val = MINUS;
                 break;
             case(42):
-                stack_push(operatorz, INT2VOIDP(MULTIPLY));
+                toke->val = MULTIPLY;
                 break;
             case(47):
-                stack_push(operatorz, INT2VOIDP(DIVIDE));
+                toke->val = DIVIDE;
                 break;
             case(37):
-                stack_push(operatorz, INT2VOIDP(MODULO));
+                toke->val = MODULO;
                 break;
             case(40):
-                stack_push(operatorz, INT2VOIDP(LEFTBRACKET));
+                toke->val = LEFTBRACKET;
                 break;
             case(41):
-                stack_push(operatorz, INT2VOIDP(RIGHTBRACKET));
+                toke->val = RIGHTBRACKET;
                 break;
             default:
                 printf("OOFT!\n");
                 return 1;
             }
+            printf("OPS! %s\n", ops[toke->val]);
+            printf("OPS SIZE! %d\n", stack_size(operatorz));
+            // TODO - here - do the right thing
+            // if (stack_size(operatorz) > 0) {
+            //     bool wurk_it = true;
+            //     while(wurk_it) {
+            //         // check precedence
+            //         token *top_o_the_stack = stack_peek(operatorz);
+            //         if ((associativity(toke->val) == LEFT && precedence(toke->val) <= precedence(top_o_the_stack->val)) ||
+            //            (associativity(toke->val) == RIGHT && precedence(toke->val) < precedence(top_o_the_stack->val))) {
+            //                if (stack_pop(operatorz, (void **) &top_o_the_stack) == 0) {
+            //                    stack_push(numberz, (void **)top_o_the_stack);
+            //                } else printf("couldnae pop, capn\n");
+            //         } else {
+            //             wurk_it = false;
+            //         }
+            //     }
+            // }
+            stack_push(operatorz, (void **)(toke));
         }
     }
 
+    token *re_token;
+
     printf("NUMBERZ SIZE %d\n", stack_size(numberz));
-    int c;
-    while (stack_pop(numberz, (void **) &c) == 0) {
-      printf("Num %d\n", c);
+    while (stack_pop(numberz, (void **) &re_token) == 0) {
+      printf("Num %d\n", re_token->val);
     }
 
     printf("\nOPERATORZ SIZE %d\n", stack_size(operatorz));
-    int op;
-    while (stack_pop(operatorz, (void **) &op) == 0) {
-      printf("OP %s\n", ops[op]);
+    while (stack_pop(operatorz, (void **) &re_token) == 0) {
+      printf("OP %s\n", ops[re_token->val]);
     }
 
     stack_destroy(operatorz);
