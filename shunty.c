@@ -132,7 +132,7 @@ int parse_bytebeat(char *pattern)
 
     if (!isvalid_pattern(pattern)) {
         printf("Beat it ya val jerk - acceptables chars are 0-9,"
-                "<, >, |, ^, ~, (,), +, -, /, *, &,\n");
+                "<, >, |, ^, ~, (, ), +, -, /, *, &, %\n");
         return EXIT_FAILURE;
     }
 
