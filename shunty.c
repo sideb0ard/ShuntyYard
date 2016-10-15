@@ -129,17 +129,18 @@ int associativity(int op)
 
 int parse_bytebeat(char *pattern)
 {
-    Stack *numberz = calloc(1, sizeof(List));
-    stack_init(numberz, NULL);
-
-    Stack *operatorz = calloc(1, sizeof(List));
-    stack_init(operatorz, NULL);
 
     if (!isvalid_pattern(pattern)) {
         printf("Beat it ya val jerk - acceptables chars are 0-9,"
                 "<, >, |, ^, ~, (,), +, -, /, *, &,\n");
         return EXIT_FAILURE;
     }
+
+    Stack *numberz = calloc(1, sizeof(List));
+    stack_init(numberz, NULL);
+
+    Stack *operatorz = calloc(1, sizeof(List));
+    stack_init(operatorz, NULL);
 
     int pattern_len = strlen(pattern);
     for (int i = 0; i < pattern_len; i++) {
