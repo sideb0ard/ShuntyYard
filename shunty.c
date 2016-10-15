@@ -23,6 +23,9 @@ enum ops {
     RIGHTBRACKET
 };
 
+// order must match the enum above
+char *ops[] = {"<<", ">>", "^", "|", "~", "&", "+", "-", "*", "/", "%", "(", ")"};
+
 bool isnum(char *ch);
 bool isvalid_char(char *ch);
 bool isvalid_pattern(char *pattern);
@@ -60,7 +63,7 @@ bool isvalid_pattern(char *pattern)
     int pattern_len = strlen(pattern);
 
     for (int i = 0; i < pattern_len; i++) {
-        printf("%c (%d)\n", pattern[i], pattern[i]);
+        // printf("%c (%d)\n", pattern[i], pattern[i]);
         if (pattern[i] == 0 || pattern[i] == 32) // EOF or space
             continue;
         if (!isvalid_char(&pattern[i]))
@@ -159,7 +162,7 @@ int parse_bytebeat(char *pattern)
     printf("\nOPERATORZ SIZE %d\n", stack_size(operatorz));
     int op;
     while (stack_pop(operatorz, (void **) &op) == 0) {
-      printf("OP %d\n", op);
+      printf("OP %s\n", ops[op]);
     }
 
     stack_destroy(operatorz);
