@@ -1,9 +1,8 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 #include "list.h"
-
 
 void list_init(List *list, void (*destroy)(void *data))
 {
@@ -13,29 +12,26 @@ void list_init(List *list, void (*destroy)(void *data))
     list->tail = NULL;
 }
 
-
 void list_destroy(List *list)
 {
     void *data;
     while (list_size(list) > 0) {
-        if ( list_rem_next(list, NULL, (void **)&data) == 0 && 
-                list->destroy != NULL)
-        {
+        if (list_rem_next(list, NULL, (void **)&data) == 0 &&
+            list->destroy != NULL) {
             list->destroy(data);
         }
     }
     memset(list, 0, sizeof(List));
 }
 
-
 int list_ins_next(List *list, ListElmt *element, const void *data)
 {
     ListElmt *new_element;
 
-    if ((new_element = (ListElmt*) malloc(sizeof(ListElmt))) == NULL)
+    if ((new_element = (ListElmt *)malloc(sizeof(ListElmt))) == NULL)
         return -1;
 
-    new_element->data = (void *) data;
+    new_element->data = (void *)data;
     if (element == NULL) {
         if (list_size(list) == 0)
             list->tail = new_element;

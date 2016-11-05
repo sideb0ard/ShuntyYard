@@ -4,7 +4,6 @@
 
 #include "list.h"
 
-
 typedef List Queue;
 
 #define queue_init list_init

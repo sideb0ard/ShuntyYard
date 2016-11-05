@@ -9,7 +9,8 @@ int main(int argc, char **argv)
         return 1;
     t = atoi(argv[1]);
 
-    int result = ((t<<1)^((t<<1)+(t>>7)&t>>12))|t>>(4-(1^7&(t>>19)))|t>>7;
+    int result = ((t << 1) ^ ((t << 1) + (t >> 7) & t >> 12)) |
+                 t >> (4 - (1 ^ 7 & (t >> 19))) | t >> 7;
     printf("Result is %d\n", result);
 
     // ((t<<1)^((t<<1)+(t>>7)&t>>12))|t>>(4-(1^7&(t>>19)))|t>>7
