@@ -27,12 +27,13 @@ enum ops {
     DIVIDE,
     MODULO,
     LEFTBRACKET,
-    RIGHTBRACKET
+    RIGHTBRACKET,
+    TEE // letter 't' time counter
 };
 
 // order must match the enum above
 char *ops[] = {"<<", ">>", "^", "|", "~", "&", "+",
-               "-",  "*",  "/", "%", "(", ")"};
+               "-",  "*",  "/", "%", "(", ")", "t"};
 
 typedef struct token {
     int type;
@@ -42,7 +43,7 @@ typedef struct token {
 int associativity(int op); // left or right
 int bin_or_uni(int op);
 int calc(int operator, int first_operand, int val);
-int parse_bytebeat(char *pattern, Stack *stack);
+int parse_bytebeat(int t, char *pattern, Stack *stack);
 int parse_rpn(Stack *rpn_stack);
 int precedence(int op);
 bool isnum(char *ch);
@@ -67,7 +68,7 @@ bool isvalid_char(char *ch)
 
     // else check for valid chars in a bitwise operation
     static char acceptable[] = {'<', '>', '|', '^', '~', '+', '-',
-                                '/', '*', '&', '%', '(', ')'};
+                                '/', '*', '&', '%', '(', ')', 't'};
 
     int acceptable_len = strlen(acceptable);
     for (int i = 0; i < acceptable_len; i++) {
@@ -139,7 +140,7 @@ int bin_or_uni(int op)
     }
 }
 
-int parse_bytebeat(char *pattern, Stack *rpn_stack)
+int parse_bytebeat(int t, char *pattern, Stack *rpn_stack)
 {
 
     if (!isvalid_pattern(pattern)) {
@@ -196,9 +197,17 @@ int parse_bytebeat(char *pattern, Stack *rpn_stack)
                 toke->val = LEFTBRACKET;
             else if (strcmp(wurd, ")") == 0)
                 toke->val = RIGHTBRACKET;
+            else if (strcmp(wurd, "t") == 0)
+                toke->val = TEE;
             else {
                 printf("OOFT!\n");
                 return 1;
+            }
+            if (toke->val == TEE) {
+                toke->type = NUMBER;
+                toke->val = t;
+                stack_push(rpn_stack, (void *)(toke));
+                continue;
             }
             if (toke->val == LEFTBRACKET) {
                 stack_push(operatorz, (void *)(toke));
@@ -351,6 +360,8 @@ int parse_rpn(Stack *rpn_stack)
                 stack_pop(ans_stack, (void **)&first_operand);
                 ;
 
+                printf("Wurking on %d and %d\n", first_operand->val,
+                       second_operand->val);
                 int ans = calc(re_token->val, first_operand->val,
                                second_operand->val);
 
@@ -365,8 +376,11 @@ int parse_rpn(Stack *rpn_stack)
                 free(first_operand);
             }
         }
-        else
+        else {
             printf("Wowo, nelly!\n");
+        }
+        re_token = stack_peek(ans_stack);
+        printf("TOTESOFAR: %d\n", re_token->val);
     }
 
     int ret_val = -1;
@@ -388,36 +402,39 @@ int parse_rpn(Stack *rpn_stack)
 
 void reverse_stack(Stack *stack)
 {
+    printf("\n=============\n");
     Stack *rev_stack = calloc(1, sizeof(List));
     stack_init(rev_stack, NULL);
-
-    printf("\n===============\n"
-           "SIZEOF stack: %d\n",
-           stack_size(stack));
-    printf("REVERSEnn!\n");
 
     token *tokey;
     while (stack_size(stack) > 0) {
         stack_pop(stack, (void **)&tokey);
+        if (tokey->type == NUMBER)
+            printf(":: %d\n", tokey->val);
+        else
+            printf(":: %s\n", ops[tokey->val]);
         stack_push(rev_stack, (void *)tokey);
     }
 
-    printf("SIZEOF stack: %d\n", stack_size(stack));
-    printf("SIZEOF rev_stack: %d\n", stack_size(rev_stack));
-
     Stack tmp_stack = *stack;
     *stack = *rev_stack;
-    printf("SIZEOF  nstack: %d\n", stack_size(stack));
     stack_destroy(&tmp_stack);
-    printf("SIZEOF  nstack: %d\n", stack_size(stack));
 }
 
 int main(int argc, char **argv)
 {
-    if (argc != 2) {
+    if (argc < 2) {
         printf("Dingie mate - gimme a quote delimited bytebeat\n");
         return EXIT_FAILURE;
     }
+
+    int t = 1;
+
+    if (argc == 3) {
+        t = atoi(argv[2]);
+    }
+
+    printf("T is %d\n", t);
 
     char pattern[128];
     strncpy(pattern, argv[1], 127);
@@ -425,7 +442,7 @@ int main(int argc, char **argv)
     Stack *rpn_stack = calloc(1, sizeof(List));
     stack_init(rpn_stack, NULL);
 
-    parse_bytebeat(pattern, rpn_stack);
+    parse_bytebeat(t, pattern, rpn_stack);
     reverse_stack(rpn_stack);
 
     printf("SIZEOF RETRUNED RVRS STACK %d\n", stack_size(rpn_stack));
