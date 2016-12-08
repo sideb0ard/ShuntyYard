@@ -115,6 +115,9 @@ int precedence(int op)
     case 9:  // DIVIDE
     case 10: // MODULO
         return 6;
+    case 11: // left and right bracket
+    case 12:
+        return 0;
     default:
         return 99;
     }
