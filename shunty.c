@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "stack.h"
+#include "list.h"
 
 enum direction { LEFT, RIGHT };
 
@@ -43,6 +44,7 @@ typedef struct token {
 int associativity(int op); // left or right
 int bin_or_uni(int op);
 char calc(int operator, int first_operand, int val);
+int eval_token(token *re_token, Stack *ans_stack, token *tmp_tokens, int *tmp_token_num);
 int parse_bytebeat(int t, char *pattern, Stack *stack);
 int parse_rpn(Stack *rpn_stack);
 int precedence(int op);
@@ -324,82 +326,107 @@ char calc(int operator, int first_operand, int second_operand)
     }
 }
 
+int eval_token(token *re_token, Stack *ans_stack, token *tmp_tokens, int *tmp_token_num)
+{
+   if (re_token->type == NUMBER) {
+       tmp_tokens[*tmp_token_num].type = NUMBER;
+       tmp_tokens[*tmp_token_num].val = re_token->val;
+
+       stack_push(ans_stack, (void *)&tmp_tokens[(*tmp_token_num)++]);
+       printf("SIZEOF ANS STACK %d\n", stack_size(ans_stack));
+       token *t = stack_peek(ans_stack);
+       printf("Peek - just pushed %d\n", t->val);
+
+   }
+   else if (re_token->type == OPERATOR) {
+       printf("Op %s\n", ops[re_token->val]);
+       if (bin_or_uni(re_token->val) == UNARY) {
+           printf("UNARY!\n");
+           token *first_operand;
+           stack_pop(ans_stack, (void **)&first_operand);
+
+           int ans = ~first_operand->val;
+           first_operand->val = ans;
+           stack_push(ans_stack, (void *)first_operand);
+           printf("SIZEOF ANS STACK %d\n", stack_size(ans_stack));
+       }
+       else {
+           printf("BINARY!\n");
+           if (stack_size(ans_stack) < 2) {
+               printf("Barf, not enough operands on stack\n");
+               return 1;
+           }
+           printf("SIZEOF ANS STACK bef BIN %d\n", stack_size(ans_stack));
+           token *second_operand;
+           stack_pop(ans_stack, (void **)&second_operand);
+           printf("just popped second: %d\n", second_operand->val);
+
+           token *first_operand;
+           stack_pop(ans_stack, (void **)&first_operand);
+           printf("just popped first: %d\n", first_operand->val);
+
+
+           printf("Wurking on %d and %d\n", first_operand->val,
+                  second_operand->val);
+           char ans = calc(re_token->val, first_operand->val,
+                          second_operand->val);
+           printf("SIZEOF ANS STACK aft BIN %d\n", stack_size(ans_stack));
+
+           printf("CAlced! %d\n", ans);
+
+           tmp_tokens[*tmp_token_num].type = NUMBER;
+           tmp_tokens[*tmp_token_num].val = ans;
+           stack_push(ans_stack, (void *)&tmp_tokens[(*tmp_token_num)++]);
+           printf("SIZEOF ANS STACK POST PUSH BIN %d\n", stack_size(ans_stack));
+       }
+   }
+   else {
+       printf("Wowo, nelly!\n");
+       return -1;
+   }
+
+   return 0;
+}
+
 int parse_rpn(Stack *rpn_stack)
 {
     printf("\n\n======================================\n");
 
-    Stack *ans_stack = calloc(1, sizeof(List));
-    stack_init(ans_stack, NULL);
+    token tmp_tokens[30];
+    memset(tmp_tokens, 0, sizeof(tmp_tokens));
+    int tmp_token_num = 0;
+
+    Stack ans_stack;
+    stack_init(&ans_stack, NULL);
 
     printf("SIZEOF PRSEN STACK %d\n", stack_size(rpn_stack));
+    printf("SIZEOF ANS STACK %d\n", stack_size(&ans_stack));
 
-    token *re_token;
-    while (stack_pop(rpn_stack, (void **)&re_token) == 0) {
-        if (re_token->type == NUMBER) {
-            printf("Num %d\n", re_token->val);
-            stack_push(ans_stack, (void *)re_token);
-        }
-        else if (re_token->type == OPERATOR) {
-            printf("Op %s\n", ops[re_token->val]);
-            if (bin_or_uni(re_token->val) == UNARY) {
-                printf("UNARY!\n");
-                token *first_operand;
-                stack_pop(ans_stack, (void **)&first_operand);
-                ;
-                int ans = ~first_operand->val;
-                first_operand->val = ans;
-                stack_push(ans_stack, (void *)first_operand);
-            }
-            else {
-                printf("BINARY!\n");
-                if (stack_size(ans_stack) < 2) {
-                    printf("Barf, not enough operands on stack\n");
-                    return 1;
-                }
-                token *second_operand;
-                stack_pop(ans_stack, (void **)&second_operand);
-                ;
-                token *first_operand;
-                stack_pop(ans_stack, (void **)&first_operand);
-                ;
-
-                printf("Wurking on %d and %d\n", first_operand->val,
-                       second_operand->val);
-                char ans = calc(re_token->val, first_operand->val,
-                               second_operand->val);
-
-                printf("CAlced! %d\n", ans);
-
-                token *ans_toke = calloc(1, sizeof(token));
-                ans_toke->type = NUMBER;
-                ans_toke->val = ans;
-                stack_push(ans_stack, (void *)ans_toke);
-
-                free(second_operand);
-                free(first_operand);
-            }
-        }
-        else {
-            printf("Wowo, nelly!\n");
-        }
-        re_token = stack_peek(ans_stack);
-        printf("TOTESOFAR: %d\n", re_token->val);
+    ListElmt *listee = rpn_stack->head;
+    while(listee->next != NULL)
+    {
+        token *re_token = listee->data;
+        eval_token(re_token, &ans_stack, tmp_tokens, &tmp_token_num);
+        listee = listee->next;
     }
+    token *re_token = listee->data;
+    eval_token(re_token, &ans_stack, tmp_tokens, &tmp_token_num);
+
+    printf("SIZEOF ANS STACK %d\n", stack_size(&ans_stack));
 
     int ret_val = -1;
 
-    if (stack_size(ans_stack) == 1) {
+    if (stack_size(&ans_stack) == 1) {
         token *atoke;
-        stack_pop(ans_stack, (void **)&atoke);
+        stack_pop(&ans_stack, (void **)&atoke);
         ret_val = atoke->val;
-        free(atoke);
         printf("Woop, gots an answer: %d\n", ret_val);
     }
     else {
         printf("Nah man, too many items on stack, sumthing is fucked\n");
     }
 
-    stack_destroy(ans_stack);
+    //stack_destroy(ans_stack);
     return ret_val;
 }
 
