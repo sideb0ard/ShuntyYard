@@ -42,7 +42,7 @@ typedef struct token {
 
 int associativity(int op); // left or right
 int bin_or_uni(int op);
-int calc(int operator, int first_operand, int val);
+char calc(int operator, int first_operand, int val);
 int parse_bytebeat(int t, char *pattern, Stack *stack);
 int parse_rpn(Stack *rpn_stack);
 int precedence(int op);
@@ -294,7 +294,7 @@ int parse_bytebeat(int t, char *pattern, Stack *rpn_stack)
     return EXIT_SUCCESS;
 }
 
-int calc(int operator, int first_operand, int second_operand)
+char calc(int operator, int first_operand, int second_operand)
 {
     switch (operator) {
     case 0: // left shift
@@ -365,7 +365,7 @@ int parse_rpn(Stack *rpn_stack)
 
                 printf("Wurking on %d and %d\n", first_operand->val,
                        second_operand->val);
-                int ans = calc(re_token->val, first_operand->val,
+                char ans = calc(re_token->val, first_operand->val,
                                second_operand->val);
 
                 printf("CAlced! %d\n", ans);
@@ -452,6 +452,8 @@ int main(int argc, char **argv)
 
     int ans = parse_rpn(rpn_stack);
     printf("ANSWER IS %d\n", ans);
+    double scale_val = (2.0 / 256 * ans);
+    printf("scaled ANSWER IS %f\n", scale_val);
 
     stack_destroy(rpn_stack);
 }
